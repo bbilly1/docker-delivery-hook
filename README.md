@@ -15,15 +15,15 @@ Docker Compose example:
 ```yml
 services:
   docker-delivery-hook:
-    build: .
-    container_name: fastapi-webhook
+    image: ghcr.io/bbilly1/docker-delivery-hook
+    container_name: docker-delivery-hook
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - /path/to/docker-compose.yml:/path/to/docker-compose.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /path/to/docker-compose.yml:/path/to/docker-compose.yml
     ports:
-    - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
-    SECRET_KEY: "your-very-secret-key"
+      SECRET_KEY: "your-very-secret-key"
 ```
 
 Make sure you specify the `container_name` key for all services on your host system, as that is used for identification.
