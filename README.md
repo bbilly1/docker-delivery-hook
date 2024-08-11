@@ -39,7 +39,7 @@ Configure the API with these environment variables:
 
 - `SECRET_KEY`: Required, shared secret key for signature validation.
 - `UVICORN_PORT`: Optional, overwrite internal web server port from default 8000.
-- `SHOW_DOCS`: Optional, set to anything except empty string to show default FastAPI docs. Only for your local dev environment.
+- `SHOW_DOCS`: Optional, set to anything except an empty string to show default FastAPI docs. Only for your local dev environment.
 
 ## Endpoints
 
@@ -123,7 +123,7 @@ That has a few downsides:
 - Another SSH key on the VM is required to basically just execute a single command. That is an additional exposure that you might want to avoid.
 - The private key needs to be in the CI/CD pipeline and will be accessible by everyone with access to the pipeline.
 - That is difficult to manage with infrastructure as code. Having a CI/CD listener on your VM that can react to webhooks can be managed in your regular docker compose file. All can be committed to version control as part of your application, obviously except the `SECRET_KEY`.
-- Needing SSH from your pipeline makes hardening your SSH exposure much more difficult. Depending on your environment you might not know all possible IPs from your runners and you might not allow SSH to be available to the internet unrestricted. 
+- Needing SSH from your pipeline makes hardening your SSH exposure much more difficult. Depending on your environment you might not know all possible IPs from your runners and you might not allow SSH to be available to the internet unrestricted.
 
 ### Mounting docker socket
 You might also want to read up on the implication for mounting `docker.sock` into the container. Verify the code first, use at your own risk before publishing that to the internet.
