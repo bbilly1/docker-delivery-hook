@@ -10,6 +10,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
 
+    outputs:
+      lint-status: ${{ steps.lint-check.conclusion }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
