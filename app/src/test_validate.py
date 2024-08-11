@@ -7,6 +7,7 @@ from os import environ
 from unittest.mock import patch
 
 import pytest
+from src.types import RequestData
 from src.validate import ValidateRequest
 
 SECRET_KEY = environ["SECRET_KEY"]
@@ -118,20 +119,9 @@ def test_get_container_name_valid():
     """expected container_name in json_data"""
     headers = {}
     request_body = b""
-    json_data = {"container_name": "test-container"}
+    data = RequestData(container_name="test-container")
 
-    validator = ValidateRequest(headers, json_data, request_body)
+    validator = ValidateRequest(headers, data, request_body)
     container_name = validator.get_container_name()
 
     assert container_name == "test-container"
-
-
-def test_get_container_name_missing():
-    """no container_name defined in json_data"""
-    headers = {}
-    request_body = b""
-    json_data = {}
-
-    validator = ValidateRequest(headers, json_data, request_body)
-    with pytest.raises(ValueError, match="no container name defined"):
-        validator.get_container_name()

@@ -66,7 +66,7 @@ class ValidateRequest:
 
     def get_container_name(self) -> str:
         """extract container name from data"""
-        container_name = dict(self.data).get("container_name")
+        container_name = self.data.container_name
         if not container_name:
             raise ValueError("no container name defined")
 
@@ -77,7 +77,11 @@ class ValidateRequest:
         """validate container_name exists"""
         all_containers = await run_command("docker ps -a --format=json")
         for container in all_containers.split("\n"):
-            container_json = json.loads(container)
+            try:
+                container_json = json.loads(container)
+            except ValueError:
+                continue
+
             if container_json.get("Names") == container_name:
                 return
 
