@@ -30,3 +30,10 @@ To run the API, change directory to the app folder, set your secret key env var 
 cd app
 SECRET_KEY="your-very-secret-key" python main.py
 ```
+
+## New Release
+To create a new release:
+
+1. Tag: `git tag v0.0.0`
+2. Push: `git push --tags` to trigger build CI/CD
+3. Create release on GH
