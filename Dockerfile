@@ -1,6 +1,6 @@
 # build container in python base image
 
-FROM python:3.11.8-slim-bookworm
+FROM python:3.13.1-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN \
     DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker} && \
     mkdir -p $DOCKER_CONFIG/cli-plugins && \
-    curl -SL https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose && \
+    curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose && \
     chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
 
 COPY requirements.txt /
