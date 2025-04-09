@@ -24,11 +24,11 @@ To run the tests, simply run from the root of the repo:
 pytest
 ```
 
-To run the API, change directory to the app folder, set your secret key env var and start:
+To run the API, change directory to the app folder, set your secret key env var, optionally make the docs accessible and start:
 
 ```
 cd app
-SECRET_KEY="your-very-secret-key" python main.py
+SECRET_KEY="your-very-secret-key" SHOW_DOCS=1 python main.py
 ```
 
 ## New Release
