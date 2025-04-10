@@ -55,6 +55,11 @@ docker compose pull container_name && docker compose up -d container_name
 ```bash
 docker compose up -d --build container_name
 ```
+- `/swarm`: Rebuild your container in a docker swarm. This is equivalent to:
+```bash
+docker service update --image container_image --with-registry-auth --force container_name
+```
+Where the `container_image` gets automatically looked up from the `container_name`.
 
 These endpoints are async. Meaning after request validation will return while the docker commands will process in the background.
 

@@ -8,7 +8,7 @@ import time
 from os import environ
 
 from src.execute import run_command
-from src.types import RequestData
+from src.types import RequestData, ServiceJsonType, SwarmRequestData
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,23 +19,32 @@ class ValidateRequest:
     TIME_WINDOW = 300  # 5 minutes
     SECRET_KEY = environ["SECRET_KEY"]
 
-    def __init__(
-        self, headers: dict, data: RequestData, request_body: bytes
-    ) -> None:
+    def __init__(self, headers: dict, request_body: bytes) -> None:
         self.headers = headers
-        self.data = data
         self.request_body = request_body
 
-    async def validate(self) -> tuple[str, str]:
+    async def validate(self, data: RequestData) -> tuple[str, str]:
         """validate request"""
         self.validate_timestamp()
         self.validate_signature()
-        container_name = self.get_container_name()
+        container_name = self.get_container_name(data)
         await self.validate_container_name(container_name)
         compose_file = await self.get_compose_file(container_name)
         logging.info("validation passed")
 
         return container_name, compose_file
+
+    async def validate_swarm(self, data: SwarmRequestData) -> ServiceJsonType:
+        """validate swarm request"""
+        self.validate_timestamp()
+        self.validate_signature()
+        container_name = self.get_container_name(data)
+        service_json: ServiceJsonType = await self.validate_swarm_service(
+            container_name
+        )
+        logging.info("validation passed")
+
+        return service_json
 
     def validate_timestamp(self) -> None:
         """raise valueerror on invalid timestamp"""
@@ -64,9 +73,9 @@ class ValidateRequest:
         if not hmac.compare_digest(computed_signature, signature):
             raise ValueError("invalid signature")
 
-    def get_container_name(self) -> str:
+    def get_container_name(self, data: RequestData | SwarmRequestData) -> str:
         """extract container name from data"""
-        container_name = self.data.container_name
+        container_name = data.container_name
         if not container_name:
             raise ValueError("no container name defined")
 
@@ -84,6 +93,25 @@ class ValidateRequest:
 
             if container_json.get("Names") == container_name:
                 return
+
+        raise ValueError("container_name not found")
+
+    async def validate_swarm_service(
+        self, container_name: str
+    ) -> ServiceJsonType:
+        """validate swarm service name"""
+        services = await run_command("docker service ls --format=json")
+        for service in services.split("\n"):
+            if not service:
+                continue
+
+            try:
+                service_json = ServiceJsonType.model_validate_json(service)
+            except ValueError:
+                continue
+
+            if service_json.Name == container_name:
+                return service_json
 
         raise ValueError("container_name not found")
 
