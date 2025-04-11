@@ -7,6 +7,7 @@ import logging
 import time
 from os import environ
 
+from fastapi import HTTPException
 from src.execute import run_command
 from src.types import RequestData, ServiceJsonType, SwarmRequestData
 
@@ -100,7 +101,11 @@ class ValidateRequest:
         self, container_name: str
     ) -> ServiceJsonType:
         """validate swarm service name"""
-        services = await run_command("docker service ls --format=json")
+        try:
+            services = await run_command("docker service ls --format=json")
+        except Exception as err:
+            raise HTTPException(status_code=400, detail=str(err)) from err
+
         for service in services.split("\n"):
             if not service:
                 continue
