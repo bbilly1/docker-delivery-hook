@@ -57,13 +57,18 @@ docker compose up -d --build container_name
 ```
 - `/swarm`: Rebuild your container in a docker swarm. This is equivalent to:
 ```bash
-docker service update --image container_image --with-registry-auth --force container_name
+docker service update --image container_image --force container_name
 ```
 Where the `container_image` gets automatically looked up from the `container_name`.
 
+- Optionally add `{"with_registry_auth": true}` to the payload to add `--with-registry-auth` for private repositories.
+
 These endpoints are async. Meaning after request validation will return while the docker commands will process in the background.
 
-## Pipeline Example
+## Action Example
+There is an action published to the Github marketplace created from [bbilly1/docker-delivery-hook-action](https://github.com/bbilly1/docker-delivery-hook-action). See the instructions there with example usage.
+
+## Manual Pipeline Example
 
 ```bash
 PAYLOAD='{"container_name": "my-container-name"}'
