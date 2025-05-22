@@ -1,6 +1,7 @@
 """application bootstrap"""
 
 import asyncio
+import logging
 from os import environ
 
 import uvicorn
@@ -14,11 +15,14 @@ from src.types import (
 )
 from src.validate import ValidateRequest
 
+logging.basicConfig(level=logging.INFO)
+
 UVICORN_PORT = int(environ.get("UVICORN_PORT", 8000))
 SHOW_DOCS = bool(environ.get("SHOW_DOCS"))
+HOOK_VERSION = environ.get("HOOK_VERSION", "dev")
 
 app = FastAPI(
-    version="v0.1.0",
+    version=HOOK_VERSION,
     docs_url="/docs" if SHOW_DOCS else None,
     redoc_url="/redoc" if SHOW_DOCS else None,
     openapi_url="/openapi.json" if SHOW_DOCS else None,
@@ -141,4 +145,5 @@ async def rebuild_sarm_container(
 
 # entry point
 if __name__ == "__main__":
+    logging.info("Starting Docker Delivery Hook: %s", HOOK_VERSION)
     uvicorn.run(app, host="0.0.0.0", port=UVICORN_PORT)
