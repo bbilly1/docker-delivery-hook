@@ -1,12 +1,12 @@
 # Docker Delivery Hook
-Webhook endpoint to trigger docker container rebuild
+Webhook endpoint to trigger docker container rebuild.
 
 ## Usecase
-- You build and push your container images from a CI/CD pipeline to a container registry
-- You run your own container from a VM created from a docker compose file
-- You are looking for a way to pull and recreate your docker image after CI/CD completes
-- You want to avoid polling the container registry on an interval
-- You want to avoid setting up SSH from the pipeline into your server
+- You build and push your container images from a CI/CD pipeline to a container registry.
+- You run your own container from a VM created from a docker compose file or docker stack swarm.
+- You are looking for a way to pull and recreate your docker image after CI/CD completes.
+- You want to avoid polling the container registry on an interval.
+- You want to avoid setting up SSH from the pipeline into your server.
 
 ## Install
 
@@ -19,21 +19,37 @@ services:
     container_name: docker-delivery-hook
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /path/to/docker-compose.yml:/path/to/docker-compose.yml
+      - /path/to/docker-compose.yml:/path/to/docker-compose.yml:ro
     ports:
       - "127.0.0.1:8000:8000"
     environment:
       SECRET_KEY: "your-very-secret-key"
 ```
 
-Make sure you specify the `container_name` key for all services on your host system, as that is used for identification.
+### Permissions
+You can run the application under a custom user instead of the default root user. You need to make sure the user running in the container has access to the docker socket. 
+
+On your host system, verify the user and group permissions of the docker socket, e.g.:
+
+```bash
+stat /var/run/docker.sock
+```
+
+Note the `Gid` number of the socket, and use the same for your user to run the container under, e.g.:
+
+```yml
+services:
+  docker-delivery-hook:
+    user: 1000:988
+    ...
+```
 
 ### Volumes
 
 - Docker Socket: Mount host docker socket into the container to allow the container to execute docker commands as the host user. See security considerations below.
-- Compose File: Crucially mount the docker-compose.yml file exactly at the same absolute path inside the container as outside on the host machine. Docker tracks the compose environment with the labels `com.docker.compose.project.config_files` and `com.docker.compose.project.working_dir`. Interacting with existing containers requires the same compose location otherwise docker will treat this as a separate compose file.
+- Compose File (when using the compose endpoints): Crucially mount the docker-compose.yml file exactly at the same absolute path inside the container as outside on the host machine. Docker tracks the compose environment with the labels `com.docker.compose.project.config_files` and `com.docker.compose.project.working_dir`. Interacting with existing containers requires the same compose location otherwise docker will treat this as a separate compose file.
 - Compose Context: If your compose project depends on additional files like env files defined in `env_file` key, make sure the container has the same context by mounting additional folders to the same location.
-- If needed, mount the config.json file into the container at `/root/.docker/config.json`.
+- If needed for authentication, mount the docker config.json file into the container at `/root/.docker/config.json`.
 
 ### Environment Variables
 
@@ -45,7 +61,19 @@ Configure the API with these environment variables:
 
 ## Endpoints
 
-This API implements these endpoints:
+This API exposes the following endpoints. These endpoints are async. Meaning after request validation will return while the docker commands will process in the background.
+
+### Docker Compose
+
+When using these endpoints, see the notes about volumes above.
+
+These endpoints expect a mandatory body in the request with a "container_name" key, e.g.:
+
+```json
+{
+  "container_name": "your-container-name",
+}
+```
 
 - `/pull`: Rebuilding the container by pulling the new image. Only applicable if your compose file defines an `image` key. That is equivalent to:
 ```bash
@@ -55,17 +83,30 @@ docker compose pull container_name && docker compose up -d container_name
 ```bash
 docker compose up -d --build container_name
 ```
+
+### Docker Swarm
+
+These endpoints expect a mandatory body in the request with a "container_name" key and an optional "with_registry_auth" boolean key, e.g.:
+
+```json
+{
+  "container_name": "your-container-name",
+  "with_registry_auth": true,  // this is optional
+}
+```
+
 - `/swarm`: Rebuild your container in a docker swarm. This is equivalent to:
 ```bash
 docker service update --image container_image --force container_name
 ```
-Where the `container_image` gets automatically looked up from the `container_name`.
 
-- Optionally add `{"with_registry_auth": true}` to the payload to add `--with-registry-auth` for private repositories.
+- `container_name` can be either the "NAME" or "IMAGE" of your service.
+- If you pass the "NAME", the `container_image` will be looked up automatically.
+- If you pass the "IMAGE" you can omit the tag. This can result in multiple containers matching, all containers built from the specified image will update.
+- When in doubt verify with `docker service ls` on your manager node.
+- When you specify `with_registry_auth`, that adds `--with-registry-auth` to the command for private repositories.
 
-These endpoints are async. Meaning after request validation will return while the docker commands will process in the background.
-
-## Action Example
+## Action
 There is an action published to the Github marketplace created from [bbilly1/docker-delivery-hook-action](https://github.com/bbilly1/docker-delivery-hook-action). See the instructions there with example usage.
 
 ## Manual Pipeline Example
@@ -91,7 +132,7 @@ Explanation:
 - `SIGNATURE`: SHA256 HMAC signature from the message. See below for additional examples.
 - `PAYLOAD`: JSON body with key `"container_name"` and value the container name as defined in your compose file.
 
-## Signature building
+### Signature building
 
 Depending what you have available in your pipeline environment, you might want to choose one over the other. Here are some examples:
 
