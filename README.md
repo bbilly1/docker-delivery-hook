@@ -1,4 +1,5 @@
-# Docker Delivery Hook
+![Docker Delivery Hook](assets/docker-delivery-hook_banner.png?raw=true "Docker Delivery Hook Banner")  
+
 Webhook endpoint to trigger docker container rebuild.
 
 ## Usecase
