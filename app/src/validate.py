@@ -35,17 +35,19 @@ class ValidateRequest:
 
         return container_name, compose_file
 
-    async def validate_swarm(self, data: SwarmRequestData) -> ServiceJsonType:
+    async def validate_swarm(
+        self, data: SwarmRequestData
+    ) -> list[ServiceJsonType]:
         """validate swarm request"""
         self.validate_timestamp()
         self.validate_signature()
         container_name = self.get_container_name(data)
-        service_json: ServiceJsonType = await self.validate_swarm_service(
-            container_name
+        services_json: list[ServiceJsonType] = (
+            await self.validate_swarm_service(container_name)
         )
         logging.info("validation passed")
 
-        return service_json
+        return services_json
 
     def validate_timestamp(self) -> None:
         """raise valueerror on invalid timestamp"""
@@ -99,26 +101,53 @@ class ValidateRequest:
 
     async def validate_swarm_service(
         self, container_name: str
-    ) -> ServiceJsonType:
+    ) -> list[ServiceJsonType]:
         """validate swarm service name"""
         try:
             services = await run_command("docker service ls --format=json")
         except Exception as err:
             raise HTTPException(status_code=400, detail=str(err)) from err
 
-        for service in services.split("\n"):
-            if not service:
+        services_json: list[ServiceJsonType] = []
+
+        for service_raw in services.split("\n"):
+            service_json = self._process_service(service_raw, container_name)
+            if not service_json:
                 continue
 
-            try:
-                service_json = ServiceJsonType.model_validate_json(service)
-            except ValueError:
-                continue
+            services_json.append(service_json)
 
-            if service_json.Name == container_name:
+        if not services_json:
+            raise ValueError("container_name not found")
+
+        return services_json
+
+    def _process_service(
+        self, service_raw: str, container_name: str
+    ) -> None | ServiceJsonType:
+        """process service"""
+        if not service_raw:
+            return None
+
+        try:
+            service_json = ServiceJsonType.model_validate_json(service_raw)
+        except ValueError:
+            return None
+
+        if service_json.Name == container_name:
+            # exact name match
+            return service_json
+
+        if ":" in container_name:
+            # exact image match incl tag
+            if service_json.Image == container_name:
                 return service_json
 
-        raise ValueError("container_name not found")
+        if service_json.Image.split(":")[0] == container_name:
+            # image match excl tag
+            return service_json
+
+        return None
 
     async def get_compose_file(self, container_name: str) -> str:
         """get absolute compose file path from container config"""

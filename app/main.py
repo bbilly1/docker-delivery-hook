@@ -44,19 +44,19 @@ async def validate_request(
 
 async def validate_swarm_request(
     data: SwarmRequestData, request: Request
-) -> ServiceJsonType:
+) -> list[ServiceJsonType]:
     """validate request, return container_name and compose_file"""
     try:
         request_body = await request.body()
         headers = dict(request.headers)
 
-        service_json: ServiceJsonType = await ValidateRequest(
+        services_json: list[ServiceJsonType] = await ValidateRequest(
             headers, request_body
         ).validate_swarm(data)
     except ValueError as err:
         raise HTTPException(status_code=403, detail=str(err)) from err
 
-    return service_json
+    return services_json
 
 
 @app.post("/pull")
@@ -109,23 +109,32 @@ async def rebuild_sarm_container(
 ) -> ReturnMessage:
     """endpoint for swarm container rebuild"""
 
-    service_json: ServiceJsonType = await validate_swarm_request(data, request)
-    image = service_json.Image
-    service_name = service_json.Name
+    services_json: list[ServiceJsonType] = await validate_swarm_request(
+        data, request
+    )
     registry_auth = "--with-registry-auth" if data.with_registry_auth else ""
 
     async def execute_docker_commands():
-        await run_command(
-            (
-                "docker service update "
-                f"--image {image} {registry_auth} --force {service_name}"
+        for service_json in services_json:
+            image = service_json.Image
+            name = service_json.Name
+            await run_command(
+                (
+                    "docker service update "
+                    f"--image {image} {registry_auth} --force {name}"
+                )
             )
-        )
+
+    container_name = (
+        services_json[0].Name
+        if len(services_json) == 1
+        else services_json[0].Image
+    )
 
     asyncio.create_task(execute_docker_commands())
     return ReturnMessage(
         message="pulling",
-        container_name=service_name,
+        container_name=container_name,
         compose_file=False,
     )
 
