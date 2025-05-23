@@ -122,10 +122,14 @@ async def rebuild_sarm_container(
         for service_json in services_json:
             image = service_json.Image
             name = service_json.Name
+            replicas_is = service_json.ReplicasIs
+            detach = "true" if replicas_is == 0 else "false"
+
             await run_command(
                 (
                     "docker service update "
-                    f"--image {image} {registry_auth} --force {name}"
+                    f"--image {image} {registry_auth} "
+                    f"--force {name} --detach={detach}"
                 )
             )
 
