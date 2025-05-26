@@ -109,13 +109,18 @@ class ValidateRequest:
             raise HTTPException(status_code=400, detail=str(err)) from err
 
         services_json: list[ServiceJsonType] = []
+        services_names = set()
 
         for service_raw in services.split("\n"):
             service_json = self._process_service(service_raw, container_name)
             if not service_json:
                 continue
 
+            if service_json.Name in services_names:
+                continue
+
             services_json.append(service_json)
+            services_names.add(service_json.Name)
 
         if not services_json:
             raise ValueError("container_name not found")
