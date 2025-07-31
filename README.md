@@ -51,7 +51,7 @@ services:
 - Docker Socket: Mount host docker socket into the container to allow the container to execute docker commands as the host user. See security considerations below.
 - Compose File (when using the compose endpoints): Crucially mount the docker-compose.yml file exactly at the same absolute path inside the container as outside on the host machine. Docker tracks the compose environment with the labels `com.docker.compose.project.config_files` and `com.docker.compose.project.working_dir`. Interacting with existing containers requires the same compose location otherwise docker will treat this as a separate compose file.
 - Docker Context: If your project depends on additional files like env files defined in `env_file` key, make sure the container has the same context by mounting additional folders to the same location.
-- If needed for authentication, mount the docker config.json file into the container at `/root/.docker/config.json`.
+- If needed for authentication, mount the docker config.json file into the container at `$HOME/.docker/config.json` where `$HOME` is the home folder inside the container. If you are running the container under a specific `user`, `$HOME` will default to `/`, else `$HOME` will be set to `$/root`.
 
 ### Environment Variables
 
