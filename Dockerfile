@@ -1,6 +1,6 @@
 # build container in python base image
 
-FROM python:3.13.1-slim-bookworm
+FROM python:3.11.13-slim-bookworm
 
 ARG HOOK_VERSION
 ENV HOOK_VERSION=$HOOK_VERSION
