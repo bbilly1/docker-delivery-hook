@@ -59,7 +59,7 @@ class ValidateRequest:
             raise ValueError("expected x-timestamp to be epoch int")
 
         current_time = int(time.time())
-        if int(timestamp) - current_time > self.TIME_WINDOW:
+        if abs(int(timestamp) - current_time) > self.TIME_WINDOW:
             raise ValueError("Request is too old or too far in the future")
 
     def validate_signature(self):
