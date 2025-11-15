@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN \
     DOCKER_CONFIG=/usr/lib/docker/cli-plugins && \
     mkdir -p $DOCKER_CONFIG && \
-    curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/docker-compose && \
+    curl -SL https://github.com/docker/compose/releases/download/v2.40.3/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/docker-compose && \
     chmod +x $DOCKER_CONFIG/docker-compose
 
 COPY requirements.txt /
