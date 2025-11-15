@@ -26,8 +26,8 @@ class ValidateRequest:
 
     async def validate(self, data: RequestData) -> tuple[str, str]:
         """validate request"""
-        self.validate_timestamp()
         self.validate_signature()
+        self.validate_timestamp()
         container_name = self.get_container_name(data)
         await self.validate_container_name(container_name)
         compose_file = await self.get_compose_file(container_name)
@@ -39,8 +39,8 @@ class ValidateRequest:
         self, data: SwarmRequestData
     ) -> list[ServiceJsonType]:
         """validate swarm request"""
-        self.validate_timestamp()
         self.validate_signature()
+        self.validate_timestamp()
         container_name = self.get_container_name(data)
         services_json: list[ServiceJsonType] = (
             await self.validate_swarm_service(container_name)
