@@ -35,16 +35,12 @@ class ValidateRequest:
 
         return container_name, compose_file
 
-    async def validate_swarm(
-        self, data: SwarmRequestData
-    ) -> list[ServiceJsonType]:
+    async def validate_swarm(self, data: SwarmRequestData) -> list[ServiceJsonType]:
         """validate swarm request"""
         self.validate_signature()
         self.validate_timestamp()
         container_name = self.get_container_name(data)
-        services_json: list[ServiceJsonType] = (
-            await self.validate_swarm_service(container_name)
-        )
+        services_json: list[ServiceJsonType] = await self.validate_swarm_service(container_name)
         logging.info("validation passed")
 
         return services_json
@@ -70,9 +66,7 @@ class ValidateRequest:
             raise ValueError("missing x-signature in header")
 
         message = self.request_body + str(self.headers["x-timestamp"]).encode()
-        computed_signature = hmac.new(
-            key=self.SECRET_KEY.encode(), msg=message, digestmod=hashlib.sha256
-        ).hexdigest()
+        computed_signature = hmac.new(key=self.SECRET_KEY.encode(), msg=message, digestmod=hashlib.sha256).hexdigest()
         if not hmac.compare_digest(computed_signature, signature):
             raise ValueError("invalid signature")
 
@@ -99,9 +93,7 @@ class ValidateRequest:
 
         raise ValueError("container_name not found")
 
-    async def validate_swarm_service(
-        self, container_name: str
-    ) -> list[ServiceJsonType]:
+    async def validate_swarm_service(self, container_name: str) -> list[ServiceJsonType]:
         """validate swarm service name"""
         try:
             services = await run_command("docker service ls --format=json")
@@ -127,9 +119,7 @@ class ValidateRequest:
 
         return services_json
 
-    def _process_service(
-        self, service_raw: str, container_name: str
-    ) -> None | ServiceJsonType:
+    def _process_service(self, service_raw: str, container_name: str) -> None | ServiceJsonType:
         """process service"""
         if not service_raw:
             return None
@@ -164,9 +154,7 @@ class ValidateRequest:
 
         inspect_json = json.loads(inspect)
         try:
-            compose_file = inspect_json[0]["Config"]["Labels"][
-                "com.docker.compose.project.config_files"
-            ]
+            compose_file = inspect_json[0]["Config"]["Labels"]["com.docker.compose.project.config_files"]
         except (IndexError, KeyError) as err:
             raise ValueError(err) from err
 

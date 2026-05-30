@@ -16,9 +16,7 @@ SECRET_KEY = environ["SECRET_KEY"]
 def generate_signature(secret_key, body, timestamp):
     """helper function to generate a valid HMAC signature"""
     message = body + str(timestamp).encode()
-    return hmac.new(
-        secret_key.encode(), msg=message, digestmod=hashlib.sha256
-    ).hexdigest()
+    return hmac.new(secret_key.encode(), msg=message, digestmod=hashlib.sha256).hexdigest()
 
 
 def test_validate_timestamp_valid():
@@ -49,9 +47,7 @@ def test_validate_timestamp_invalid_format():
     request_body = b""
 
     validator = ValidateRequest(headers, request_body)
-    with pytest.raises(
-        ValueError, match="expected x-timestamp to be epoch int"
-    ):
+    with pytest.raises(ValueError, match="expected x-timestamp to be epoch int"):
         validator.validate_timestamp()
 
 
@@ -62,9 +58,7 @@ def test_validate_timestamp_out_of_range():
     request_body = b""
 
     validator = ValidateRequest(headers, request_body)
-    with pytest.raises(
-        ValueError, match="Request is too old or too far in the future"
-    ):
+    with pytest.raises(ValueError, match="Request is too old or too far in the future"):
         validator.validate_timestamp()
 
 

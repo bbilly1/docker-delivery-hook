@@ -47,7 +47,5 @@ class ServiceJsonType(BaseModel):
             self.ReplicasIs = int(is_)
             self.ReplicasShould = int(should)
         except Exception as exc:
-            raise ValueError(
-                f"Invalid Replicas format: {self.Replicas}"
-            ) from exc
+            raise ValueError(f"Invalid Replicas format: {self.Replicas}") from exc
         return self

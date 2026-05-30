@@ -29,34 +29,26 @@ app = FastAPI(
 )
 
 
-async def validate_request(
-    data: RequestData, request: Request
-) -> tuple[str, str]:
+async def validate_request(data: RequestData, request: Request) -> tuple[str, str]:
     """validate request, return container_name and compose_file"""
     try:
         request_body = await request.body()
         headers = dict(request.headers)
 
-        container_name, compose_file = await ValidateRequest(
-            headers, request_body
-        ).validate(data)
+        container_name, compose_file = await ValidateRequest(headers, request_body).validate(data)
     except ValueError as err:
         raise HTTPException(status_code=403, detail=str(err)) from err
 
     return container_name, compose_file
 
 
-async def validate_swarm_request(
-    data: SwarmRequestData, request: Request
-) -> list[ServiceJsonType]:
+async def validate_swarm_request(data: SwarmRequestData, request: Request) -> list[ServiceJsonType]:
     """validate request, return container_name and compose_file"""
     try:
         request_body = await request.body()
         headers = dict(request.headers)
 
-        services_json: list[ServiceJsonType] = await ValidateRequest(
-            headers, request_body
-        ).validate_swarm(data)
+        services_json: list[ServiceJsonType] = await ValidateRequest(headers, request_body).validate_swarm(data)
     except ValueError as err:
         raise HTTPException(status_code=403, detail=str(err)) from err
 
@@ -70,12 +62,8 @@ async def pull_container(data: RequestData, request: Request) -> ReturnMessage:
     container_name, compose_file = await validate_request(data, request)
 
     async def execute_docker_commands():
-        await run_command(
-            f"docker compose -f {compose_file} pull {container_name}"
-        )
-        await run_command(
-            f"docker compose -f {compose_file} up -d {container_name}"
-        )
+        await run_command(f"docker compose -f {compose_file} pull {container_name}")
+        await run_command(f"docker compose -f {compose_file} up -d {container_name}")
 
     asyncio.create_task(execute_docker_commands())
 
@@ -87,17 +75,13 @@ async def pull_container(data: RequestData, request: Request) -> ReturnMessage:
 
 
 @app.post("/build")
-async def rebuild_container(
-    data: RequestData, request: Request
-) -> ReturnMessage:
+async def rebuild_container(data: RequestData, request: Request) -> ReturnMessage:
     """endpoint to rebuild container"""
 
     container_name, compose_file = await validate_request(data, request)
 
     async def execute_docker_commands():
-        await run_command(
-            f"docker compose -f {compose_file} up -d --build {container_name}"
-        )
+        await run_command(f"docker compose -f {compose_file} up -d --build {container_name}")
 
     asyncio.create_task(execute_docker_commands())
     return ReturnMessage(
@@ -108,14 +92,10 @@ async def rebuild_container(
 
 
 @app.post("/swarm")
-async def rebuild_sarm_container(
-    data: SwarmRequestData, request: Request
-) -> ReturnMessage:
+async def rebuild_sarm_container(data: SwarmRequestData, request: Request) -> ReturnMessage:
     """endpoint for swarm container rebuild"""
 
-    services_json: list[ServiceJsonType] = await validate_swarm_request(
-        data, request
-    )
+    services_json: list[ServiceJsonType] = await validate_swarm_request(data, request)
     registry_auth = "--with-registry-auth" if data.with_registry_auth else ""
 
     async def execute_docker_commands():
@@ -126,18 +106,10 @@ async def rebuild_sarm_container(
             detach = "true" if replicas_is == 0 else "false"
 
             await run_command(
-                (
-                    "docker service update "
-                    f"--image {image} {registry_auth} "
-                    f"--force {name} --detach={detach}"
-                )
+                ("docker service update " f"--image {image} {registry_auth} " f"--force {name} --detach={detach}")
             )
 
-    container_name = (
-        services_json[0].Name
-        if len(services_json) == 1
-        else services_json[0].Image
-    )
+    container_name = services_json[0].Name if len(services_json) == 1 else services_json[0].Image
 
     asyncio.create_task(execute_docker_commands())
     return ReturnMessage(
