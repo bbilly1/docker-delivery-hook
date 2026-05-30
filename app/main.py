@@ -63,7 +63,7 @@ async def pull_container(data: RequestData, request: Request) -> ReturnMessage:
 
     async def execute_docker_commands():
         await run_command(f"docker compose -f {compose_file} pull {container_name}")
-        await run_command(f"docker compose -f {compose_file} up -d {container_name}")
+        await run_command(f"docker compose -f {compose_file} up -d --no-deps {container_name}")
 
     asyncio.create_task(execute_docker_commands())
 
@@ -81,7 +81,7 @@ async def rebuild_container(data: RequestData, request: Request) -> ReturnMessag
     container_name, compose_file = await validate_request(data, request)
 
     async def execute_docker_commands():
-        await run_command(f"docker compose -f {compose_file} up -d --build {container_name}")
+        await run_command(f"docker compose -f {compose_file} up -d --build --no-deps {container_name}")
 
     asyncio.create_task(execute_docker_commands())
     return ReturnMessage(
