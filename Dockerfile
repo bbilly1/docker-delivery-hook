@@ -2,8 +2,6 @@
 
 FROM python:3.13.11-slim-trixie
 
-ARG HOOK_VERSION
-ENV HOOK_VERSION=$HOOK_VERSION
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -22,6 +20,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY app /app
 RUN mkdir /compose
 WORKDIR /app
+
+ARG HOOK_VERSION
+ENV HOOK_VERSION=$HOOK_VERSION
 
 ENTRYPOINT ["/bin/tini", "--"]
 CMD ["python", "main.py"]
