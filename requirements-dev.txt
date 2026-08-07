@@ -1,6 +1,6 @@
 -r requirements.txt
 httpx==0.28.1
-ipython==9.14.0
-pre-commit==4.6.0
-pytest==9.0.3
+ipython==9.16.1
+pre-commit==4.6.1
+pytest==9.1.1
 requirementscheck==0.1.0
